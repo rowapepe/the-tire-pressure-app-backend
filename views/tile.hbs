@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{title}}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <h1 class="page-title">Каталог шин</h1>
+
+  <form action="/tires" method="GET" class="filter-form">
+    <div>
+      <label>Вес автомобиля</label>
+      <input type="number" name="filter" placeholder="2500" value="{{filter}}">
+    </div>
+  </form>
+
+  <div class="tile-grid">
+    {{#each tires}}
+      <a href="/tires/feed/{{this.id}}" class="tire-card">
+        <img src="{{this.imageUrl}}" alt="{{this.title}}">
+        <h3>{{this.title}}</h3>
+        <p class="likes">♡ {{this.likesCount}}</p>
+        <span class="tire-type-badge">{{this.tireType}}</span>
+        <p class="tire-weight">Под вес: {{this.vehicleWeight}} кг</p>
+      </a>
+    {{else}}
+      <p>Ничего не найдено</p>
+    {{/each}}
+  </div>
+
+  {{> nav }}
+</body>
+</html>

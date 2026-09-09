@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{title}}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body class="feed-page">
+    <div class="feed-container">
+        <video src="{{tire.videoUrl}}" poster="{{tire.imageUrl}}" autoplay muted loop playsinline></video>
+        <div class="feed-overlay">
+            <div class="feed-fields">
+                <span>⚖ {{tire.vehicleWeight}} кг</span>
+                <span>🌡 {{tire.temperature}} °C</span>
+            </div>
+            <h2>{{tire.title}}</h2>
+            <p>{{tire.description}} <a class="more-link">Больше</a></p>
+        </div>
+        <div class="feed-actions">
+            <div class="like-btn">
+                <span class="like-icon"><img src="/icons/like.png" alt="Лайк"></span>
+                <span>{{tire.likesCount}}</span>
+            </div>
+            <a href="/tires/feed/{{tire.id}}?next=true" class="next-btn"><img src="/icons/next.png" alt="Следующий"></a>
+        </div>
+    </div>
+    {{> nav }}
+</body>
+</html>

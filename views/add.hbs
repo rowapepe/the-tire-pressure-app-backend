@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{title}}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+    <div class="add-page-wrap">
+        <div class="add-form-card">
+            <h2>Добавление шин</h2>
+
+            <div class="text-block">
+                <label>Название</label>
+                <input type="text" placeholder="{{tire.title}}">
+
+                <label>Описание</label>
+                <textarea placeholder="{{tire.description}}"></textarea>
+            </div>
+
+            <div class="fields-block">
+                <label>Температура</label>
+                <input type="number" placeholder="{{tire.temperature}}">
+
+                <label>Вес автомобиля</label>
+                <input type="number" placeholder="{{tire.vehicleWeight}}">
+
+                <label>Коэффициент типа покрытия</label>
+                <input type="number" step="0.1" placeholder="{{tire.surfaceCoefficient}}">
+            </div>
+
+            <div class="type-toggle">
+                <span>Все</span><span>Лето</span><span class="active">Зима</span>
+            </div>
+
+            <div class="media-block">
+                <label>Медиа</label>
+                <div class="media-buttons">
+                    <button type="button">+ Фото</button>
+                    <button type="button">+ Видео</button>
+                </div>
+            </div>
+
+            <button type="button" class="btn btn-submit">Добавить шины</button>
+        </div>
+      </div>
+      {{> nav }}
+</body>
+</html>
