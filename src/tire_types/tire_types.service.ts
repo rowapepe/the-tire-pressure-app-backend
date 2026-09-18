@@ -1,86 +1,52 @@
-import { Injectable } from '@nestjs/common'
-import { TireTypes } from './tire_types.model'
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common'
+import { InjectDataSource, InjectRepository } from '@nestjs/typeorm'
+import { Between, DataSource, Repository } from 'typeorm'
+import { CURRENT_USER_ID, DEFAULT_IMAGE_URL, DEFAULT_VIDEO_URL, PRESSURE_LIMITS, RADIUS_LIMITS } from './tire_types.constants'
+import { SEASONS, TireTypes } from './tire_types.entity'
+
+export interface PublishTireTypeDto {
+	title?: string
+	description?: string
+	season?: string
+	optimalPressure?: string
+	radius?: string
+}
 
 @Injectable()
 export class TireTypesService {
-	private readonly minioBaseUrl = 'http://localhost:9000/media/'
+	readonly radiusLimits = RADIUS_LIMITS
 
-	readonly radiusLimits = { min: 13, max: 22 }
+	private mediaCheckCache = new Map<string, { available: boolean; expires: number }>()
 
-	private tireTypes: TireTypes[] = [
-		{
-			id: 1,
-			status: 'published',
-			title: 'Michelin Pilot Sport 4',
-			description:
-				'Летняя шина премиум-класса для спортивных автомобилей. Отличное сцепление на сухом и мокром асфальте, точная управляемость и короткий тормозной путь на высоких скоростях.',
-			season: 'летняя',
-			optimalPressure: 2.3,
-			radius: 18,
-			imageKey: 'michelin-pilot-sport.jpg',
-			videoKey: 'michelin-pilot-sport.mov',
-			likes: [101, 205],
-		},
-		{
-			id: 2,
-			status: 'published',
-			title: 'Nokian Hakkapeliitta 10',
-			description:
-				'Зимняя шипованная шина для суровых условий. Уверенно держит дорогу на льду и укатанном снегу, обеспечивает надёжное торможение и устойчивость при морозе до -40 °C.',
-			season: 'зимняя',
-			optimalPressure: 2.1,
-			radius: 17,
-			imageKey: 'nokian-hakka.jpg',
-			videoKey: 'nokian-hakka.MP4',
-			likes: [101],
-		},
-		{
-			id: 3,
-			status: 'published',
-			title: 'Continental AllSeasonContact',
-			description:
-				'Всесезонная шина для смешанных условий. Подходит для эксплуатации круглый год в умеренном климате, сохраняет эластичность в прохладную погоду и не требует сезонной переобувки.',
-			season: 'всесезонная',
-			optimalPressure: 2.2,
-			radius: 16,
-			imageKey: 'continental-allseason.jpg',
-			videoKey: 'continental-allseason.mov',
-			likes: [101, 205, 304],
-		},
-		{
-			id: 5,
-			status: 'draft',
-			title: 'Nokian Hakkapeliitta 10',
-			description:
-				'Шипованная зимняя шина для экстремально низких температур. Усиленный каркас и мягкая резина сохраняют сцепление со льдом и снегом даже в сильные морозы.',
-			season: 'зимняя',
-			optimalPressure: 2.1,
-			radius: 17,
-			imageKey: 'nokian-hakkapeliitta.jpg',
-			videoKey: 'nokian-hakka.MP4',
-			likes: [],
-		},
-		{
-			id: 6,
-			status: 'deleted',
-			title: 'Bridgestone Turanza T005',
-			description:
-				'Летняя комфортная шина с низким уровнем шума и хорошей управляемостью. Хорошо гасит неровности дороги и снижает утомляемость водителя в дальних поездках.',
-			season: 'летняя',
-			optimalPressure: 2.3,
-			radius: 17,
-			imageKey: 'bridgestone-turanza.jpg',
-			videoKey: 'bridgestone-turanza.mov',
-			likes: [],
-		},
-	]
+	constructor(
+		@InjectRepository(TireTypes) private readonly tireTypesRepository: Repository<TireTypes>,
+		@InjectDataSource() private readonly dataSource: DataSource,
+	) {}
 
-	private withMediaUrls(tireType: TireTypes) {
+	private async availableUrl(url: string | null, fallback: string) {
+		if (!url) return fallback
+		if (url.startsWith('/')) return url
+
+		const cached = this.mediaCheckCache.get(url)
+		if (cached && cached.expires > Date.now()) return cached.available ? url : fallback
+
+		let available = false
+		try {
+			const response = await fetch(url, { method: 'HEAD', signal: AbortSignal.timeout(1000) })
+			available = response.ok
+		} catch {
+			available = false
+		}
+		this.mediaCheckCache.set(url, { available, expires: Date.now() + 60_000 })
+		return available ? url : fallback
+	}
+
+	private async withMedia(tireType: TireTypes) {
 		return {
 			...tireType,
-			imageUrl: this.minioBaseUrl + tireType.imageKey,
-			videoUrl: this.minioBaseUrl + tireType.videoKey,
-			likesCount: tireType.likes.length,
+			likesCount: tireType.likeIds?.length ?? 0,
+			imageUrl: await this.availableUrl(tireType.imageUrl, DEFAULT_IMAGE_URL),
+			videoUrl: await this.availableUrl(tireType.videoUrl, DEFAULT_VIDEO_URL),
 		}
 	}
 
@@ -88,34 +54,97 @@ export class TireTypesService {
 		if (value === undefined || value.trim() === '') return fallback
 		const parsed = Number(value)
 		if (isNaN(parsed)) return fallback
-		return Math.min(Math.max(parsed, this.radiusLimits.min), this.radiusLimits.max)
+		return Math.min(Math.max(parsed, RADIUS_LIMITS.min), RADIUS_LIMITS.max)
 	}
 
 	getRadiusRange(radiusMin?: string, radiusMax?: string) {
-		const first = this.parseRadius(radiusMin, this.radiusLimits.min)
-		const second = this.parseRadius(radiusMax, this.radiusLimits.max)
+		const first = this.parseRadius(radiusMin, RADIUS_LIMITS.min)
+		const second = this.parseRadius(radiusMax, RADIUS_LIMITS.max)
 		return { min: Math.min(first, second), max: Math.max(first, second) }
 	}
 
-	findAll(radiusMin: number, radiusMax: number) {
-		return this.tireTypes
-			.filter((t) => t.status === 'published' && t.radius >= radiusMin && t.radius <= radiusMax)
-			.map((t) => this.withMediaUrls(t))
+	async findAll(radiusMin: number, radiusMax: number) {
+		const tireTypes = await this.tireTypesRepository
+			.createQueryBuilder('t')
+			.loadRelationIdAndMap('t.likeIds', 't.likes')
+			.where('t.status = :status', { status: 'published' })
+			.andWhere({ radius: Between(radiusMin, radiusMax) })
+			.orderBy('t.id', 'ASC')
+			.getMany()
+		return Promise.all(tireTypes.map((t) => this.withMedia(t)))
 	}
 
-	findDraft() {
-		const draft = this.tireTypes.find((t) => t.status === 'draft')
-		return draft ? this.withMediaUrls(draft) : null
+	async findDraft() {
+		const draft = await this.tireTypesRepository.findOneBy({ creatorId: CURRENT_USER_ID, status: 'draft' })
+		return draft ? this.withMedia(draft) : null
 	}
 
-	findFeedItem(id: number, next?: boolean) {
-		const published = this.tireTypes.filter((t) => t.status === 'published')
-		let index = published.findIndex((t) => t.id === id)
-		if (index === -1) return null
+	async findFeedItem(id: number) {
+		const tireType = await this.tireTypesRepository
+			.createQueryBuilder('t')
+			.loadRelationIdAndMap('t.likeIds', 't.likes')
+			.where('t.id = :id AND t.status = :status', { id, status: 'published' })
+			.getOne()
+		if (!tireType) throw new NotFoundException()
 
-		if (next) {
-			index = (index + 1) % published.length
+		const next =
+			(await this.tireTypesRepository
+				.createQueryBuilder('t')
+				.where('t.status = :status AND t.id > :id', { status: 'published', id })
+				.orderBy('t.id', 'ASC')
+				.getOne()) ??
+			(await this.tireTypesRepository
+				.createQueryBuilder('t')
+				.where('t.status = :status', { status: 'published' })
+				.orderBy('t.id', 'ASC')
+				.getOne())
+
+		return { tireType: await this.withMedia(tireType), nextId: next?.id ?? tireType.id }
+	}
+
+	async createDraft(title?: string) {
+		const value = (title ?? '').trim()
+		if (value === '' || value.length > 100) throw new BadRequestException('Название: от 1 до 100 символов')
+
+		const existing = await this.tireTypesRepository.findOneBy({ creatorId: CURRENT_USER_ID, status: 'draft' })
+		if (existing) return existing
+
+		return this.tireTypesRepository.save(this.tireTypesRepository.create({ title: value, status: 'draft', creatorId: CURRENT_USER_ID }))
+	}
+
+	async publish(id: number, dto: PublishTireTypeDto) {
+		const draft = await this.tireTypesRepository.findOneBy({ id, creatorId: CURRENT_USER_ID, status: 'draft' })
+		if (!draft) throw new NotFoundException()
+
+		const title = (dto.title ?? '').trim()
+		const description = (dto.description ?? '').trim()
+		const pressure = Number((dto.optimalPressure ?? '').replace(',', '.'))
+		const radius = Number(dto.radius)
+
+		if (title === '' || title.length > 100) throw new BadRequestException('Название: от 1 до 100 символов')
+		if (description === '' || description.length > 500) throw new BadRequestException('Описание: от 1 до 500 символов')
+		if (!SEASONS.includes(dto.season as (typeof SEASONS)[number])) throw new BadRequestException('Неизвестный тип шины')
+		if (isNaN(pressure) || pressure < PRESSURE_LIMITS.min || pressure > PRESSURE_LIMITS.max) {
+			throw new BadRequestException(`Давление: от ${PRESSURE_LIMITS.min} до ${PRESSURE_LIMITS.max}`)
 		}
-		return this.withMediaUrls(published[index])
+		if (!Number.isInteger(radius) || radius < RADIUS_LIMITS.min || radius > RADIUS_LIMITS.max) {
+			throw new BadRequestException(`Радиус: от ${RADIUS_LIMITS.min} до ${RADIUS_LIMITS.max}`)
+		}
+
+		draft.title = title
+		draft.description = description
+		draft.season = dto.season as TireTypes['season']
+		draft.optimalPressure = Math.round(pressure * 10) / 10
+		draft.radius = radius
+		draft.status = 'published'
+		draft.formedAt = new Date()
+		return this.tireTypesRepository.save(draft)
+	}
+
+	async softDelete(id: number) {
+		const [, affected] = await this.dataSource.query(`UPDATE tire_types SET status = 'deleted' WHERE id = $1 AND status = 'published'`, [
+			id,
+		])
+		if (affected === 0) throw new NotFoundException()
 	}
 }

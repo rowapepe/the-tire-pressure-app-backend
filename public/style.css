@@ -128,7 +128,8 @@ body {
 	color: #383838;
 }
 
-.filter-btn {
+.filter-btn,
+.submit-btn {
 	width: 100%;
 	padding: 10px;
 	background: var(--clr-red);
@@ -145,6 +146,7 @@ body {
 }
 
 .filter-btn:hover,
+.submit-btn:hover,
 .media-btn:hover {
 	background: var(--clr-chevren);
 	color: var(--clr-white);
@@ -155,6 +157,16 @@ body {
 	display: grid;
 	grid-template-columns: repeat(2, 1fr);
 	padding: 10px;
+}
+
+.tire-type-link {
+	display: block;
+	color: inherit;
+	text-decoration: none;
+}
+
+.delete-form {
+	padding: 0 10px 10px;
 }
 
 .tire-type-card {
@@ -395,7 +407,6 @@ textarea {
 	margin-bottom: 12px;
 	font-size: 14px;
 	color: #000000;
-	opacity: 0.5;
 	background: #ffffff;
 }
 
@@ -457,17 +468,37 @@ textarea {
 	margin-bottom: 15px;
 }
 
-.type-toggle span {
+.type-toggle label {
 	flex: 1;
-	text-align: center;
-	padding: 10px;
-	font-weight: bold;
-	color: #9083e0;
+	margin: 0;
 	border-right: 1px solid #9083e0;
 	cursor: pointer;
 }
 
-.type-toggle span.active {
+.type-toggle label:last-child {
+	border-right: none;
+}
+
+.type-toggle input {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	opacity: 0;
+}
+
+.type-toggle span {
+	display: block;
+	text-align: center;
+	padding: 10px 4px;
+	font-size: 12px;
+	font-weight: bold;
+	color: #9083e0;
+}
+
+.type-toggle input:checked + span {
 	background: #9083e0;
 	color: #ffffff;
 }

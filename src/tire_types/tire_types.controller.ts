@@ -1,5 +1,6 @@
-import { Controller, Get, Param, Query, Render, NotFoundException } from '@nestjs/common'
-import { TireTypesService } from './tire_types.service'
+import { Body, Controller, Get, Param, ParseIntPipe, Post, Query, Redirect, Render } from '@nestjs/common'
+import { SEASONS } from './tire_types.entity'
+import { type PublishTireTypeDto, TireTypesService } from './tire_types.service'
 
 @Controller('tire_types')
 export class TireTypesController {
@@ -7,11 +8,11 @@ export class TireTypesController {
 
 	@Get()
 	@Render('tile')
-	getTile(@Query('radiusMin') radiusMin?: string, @Query('radiusMax') radiusMax?: string) {
+	async getTile(@Query('radiusMin') radiusMin?: string, @Query('radiusMax') radiusMax?: string) {
 		const range = this.tireTypesService.getRadiusRange(radiusMin, radiusMax)
 		return {
 			title: 'Список шин',
-			tireTypes: this.tireTypesService.findAll(range.min, range.max),
+			tireTypes: await this.tireTypesService.findAll(range.min, range.max),
 			radiusMin: range.min,
 			radiusMax: range.max,
 			radiusLimits: this.tireTypesService.radiusLimits,
@@ -20,15 +21,40 @@ export class TireTypesController {
 
 	@Get('add')
 	@Render('add')
-	getAdd() {
-		return { title: 'Добавление', tireType: this.tireTypesService.findDraft() }
+	async getAdd() {
+		const tireType = await this.tireTypesService.findDraft()
+		const seasons = SEASONS.map((name) => ({ name, checked: tireType?.season === name }))
+		return { title: 'Добавление', tireType, seasons }
 	}
 
 	@Get(':id/feed')
 	@Render('feed')
-	getFeed(@Param('id') id: string, @Query('next') next?: string) {
-		const tireType = this.tireTypesService.findFeedItem(Number(id), next === 'true')
-		if (!tireType) throw new NotFoundException()
-		return { title: tireType.title, tireType }
+	async getFeed(@Param('id', ParseIntPipe) id: number) {
+		const { tireType, nextId } = await this.tireTypesService.findFeedItem(id)
+		return { title: tireType.title, tireType, nextId }
+	}
+
+	@Post()
+	@Redirect('/tire_types/add', 303)
+	async createDraft(@Body('title') title?: string) {
+		await this.tireTypesService.createDraft(title)
+	}
+
+	@Post(':id/publish')
+	@Redirect('/tire_types', 303)
+	async publish(@Param('id', ParseIntPipe) id: number, @Body() dto: PublishTireTypeDto) {
+		await this.tireTypesService.publish(id, dto)
+	}
+
+	@Post(':id/delete')
+	@Redirect('/tire_types', 303)
+	async delete(
+		@Param('id', ParseIntPipe) id: number,
+		@Body('radiusMin') radiusMin?: string,
+		@Body('radiusMax') radiusMax?: string,
+	) {
+		await this.tireTypesService.softDelete(id)
+		const range = this.tireTypesService.getRadiusRange(radiusMin, radiusMax)
+		return { url: `/tire_types?radiusMin=${range.min}&radiusMax=${range.max}` }
 	}
 }

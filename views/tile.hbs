@@ -27,13 +27,20 @@
 
 		<div class="tile-grid">
 			{{#each tireTypes}}
-			<a href="/tire_types/{{this.id}}/feed" class="tire-type-card">
-				<img src="{{this.imageUrl}}" alt="{{this.title}}" />
-				<h3>{{this.title}}</h3>
-				<p class="likes">♡ {{this.likesCount}}</p>
-				<span class="tire-type-badge">{{this.season}}</span>
-				<p class="tire-type-radius">Радиус: R{{this.radius}}</p>
-			</a>
+			<div class="tire-type-card">
+				<a href="/tire_types/{{this.id}}/feed" class="tire-type-link">
+					<img src="{{this.imageUrl}}" alt="{{this.title}}" />
+					<h3>{{this.title}}</h3>
+					<p class="likes">♡ {{this.likesCount}}</p>
+					<span class="tire-type-badge">{{this.season}}</span>
+					<p class="tire-type-radius">Радиус: R{{this.radius}}</p>
+				</a>
+				<form method="POST" action="/tire_types/{{this.id}}/delete" class="delete-form">
+					<input type="hidden" name="radiusMin" value="{{../radiusMin}}" />
+					<input type="hidden" name="radiusMax" value="{{../radiusMax}}" />
+					<button type="submit" class="submit-btn">Удалить</button>
+				</form>
+			</div>
 			{{else}}
 			<p>Ничего не найдено</p>
 			{{/each}}
