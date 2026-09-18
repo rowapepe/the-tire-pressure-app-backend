@@ -1,5 +1,5 @@
 import { Module } from "@nestjs/common"
-import { TiresModule } from "./tires/tires.module"
+import { TireTypesModule } from "./tire_types/tire_types.module"
 
-@Module({ imports: [TiresModule] })
+@Module({ imports: [TireTypesModule] })
 export class AppModule {}
