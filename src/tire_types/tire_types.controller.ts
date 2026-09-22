@@ -10,9 +10,13 @@ export class TireTypesController {
 	@Render('tile')
 	async getTile(@Query('radiusMin') radiusMin?: string, @Query('radiusMax') radiusMax?: string) {
 		const range = this.tireTypesService.getRadiusRange(radiusMin, radiusMax)
+		const isSearch = radiusMin !== undefined || radiusMax !== undefined
+		const tireTypes = isSearch
+			? await this.tireTypesService.searchByRadius(range.min, range.max)
+			: await this.tireTypesService.findAll()
 		return {
 			title: 'Список шин',
-			tireTypes: await this.tireTypesService.findAll(range.min, range.max),
+			tireTypes,
 			radiusMin: range.min,
 			radiusMax: range.max,
 			radiusLimits: this.tireTypesService.radiusLimits,

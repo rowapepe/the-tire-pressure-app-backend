@@ -63,7 +63,17 @@ export class TireTypesService {
 		return { min: Math.min(first, second), max: Math.max(first, second) }
 	}
 
-	async findAll(radiusMin: number, radiusMax: number) {
+	async findAll() {
+		const tireTypes = await this.tireTypesRepository
+			.createQueryBuilder('t')
+			.loadRelationIdAndMap('t.likeIds', 't.likes')
+			.where('t.status = :status', { status: 'published' })
+			.orderBy('t.id', 'ASC')
+			.getMany()
+		return Promise.all(tireTypes.map((t) => this.withMedia(t)))
+	}
+
+	async searchByRadius(radiusMin: number, radiusMax: number) {
 		const tireTypes = await this.tireTypesRepository
 			.createQueryBuilder('t')
 			.loadRelationIdAndMap('t.likeIds', 't.likes')
@@ -142,9 +152,24 @@ export class TireTypesService {
 	}
 
 	async softDelete(id: number) {
-		const [, affected] = await this.dataSource.query(`UPDATE tire_types SET status = 'deleted' WHERE id = $1 AND status = 'published'`, [
-			id,
-		])
-		if (affected === 0) throw new NotFoundException()
+		const queryRunner = this.dataSource.createQueryRunner()
+		await queryRunner.connect()
+		await queryRunner.startTransaction()
+		try {
+			await queryRunner.query(
+				`DECLARE tire_type_cursor CURSOR FOR SELECT id FROM tire_types WHERE id = $1 AND status = 'published' FOR UPDATE`,
+				[id],
+			)
+			const rows = await queryRunner.query(`FETCH tire_type_cursor`)
+			if (rows.length === 0) throw new NotFoundException()
+			await queryRunner.query(`UPDATE tire_types SET status = 'deleted' WHERE CURRENT OF tire_type_cursor`)
+			await queryRunner.query(`CLOSE tire_type_cursor`)
+			await queryRunner.commitTransaction()
+		} catch (e) {
+			await queryRunner.rollbackTransaction()
+			throw e
+		} finally {
+			await queryRunner.release()
+		}
 	}
 }
