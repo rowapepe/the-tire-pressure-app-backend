@@ -3,9 +3,6 @@ import { TireTypeLike } from './tire_type_like.entity'
 import { User } from './user.entity'
 
 export type TireTypeStatus = 'draft' | 'published' | 'deleted'
-export type TireTypeSeason = 'летняя' | 'зимняя' | 'всесезонная'
-
-export const SEASONS: TireTypeSeason[] = ['летняя', 'зимняя', 'всесезонная']
 
 const numericTransformer = {
 	to: (value?: number | null) => value,
@@ -31,9 +28,6 @@ export class TireTypes {
 
 	@Column({ name: 'video_url', type: 'varchar', length: 255, nullable: true })
 	videoUrl: string | null
-
-	@Column({ type: 'varchar', length: 20, nullable: true })
-	season: TireTypeSeason | null
 
 	@Column({
 		name: 'optimal_pressure',

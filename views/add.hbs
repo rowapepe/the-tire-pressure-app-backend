@@ -52,15 +52,6 @@
 					<input type="number" id="radius" name="radius" step="1" min="13" max="22" required value="{{tireType.radius}}" />
 				</div>
 
-				<div class="type-toggle">
-					{{#each seasons}}
-					<label>
-						<input type="radio" name="season" value="{{this.name}}" required {{#if this.checked}}checked{{/if}} />
-						<span>{{this.name}}</span>
-					</label>
-					{{/each}}
-				</div>
-
 				<button type="submit" class="submit-btn">Опубликовать</button>
 				{{else}}
 				<button type="submit" class="submit-btn">Далее</button>

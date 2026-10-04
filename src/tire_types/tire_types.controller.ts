@@ -1,5 +1,4 @@
 import { Body, Controller, Get, Param, ParseIntPipe, Post, Query, Redirect, Render } from '@nestjs/common'
-import { SEASONS } from './tire_types.entity'
 import { type PublishTireTypeDto, TireTypesService } from './tire_types.service'
 
 @Controller('tire_types')
@@ -27,8 +26,7 @@ export class TireTypesController {
 	@Render('add')
 	async getAdd() {
 		const tireType = await this.tireTypesService.findDraft()
-		const seasons = SEASONS.map((name) => ({ name, checked: tireType?.season === name }))
-		return { title: 'Добавление', tireType, seasons }
+		return { title: 'Добавление', tireType }
 	}
 
 	@Get(':id/feed')

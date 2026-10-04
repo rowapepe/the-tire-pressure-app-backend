@@ -2,12 +2,11 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { InjectDataSource, InjectRepository } from '@nestjs/typeorm'
 import { Between, DataSource, Repository } from 'typeorm'
 import { CURRENT_USER_ID, DEFAULT_IMAGE_URL, DEFAULT_VIDEO_URL, PRESSURE_LIMITS, RADIUS_LIMITS } from './tire_types.constants'
-import { SEASONS, TireTypes } from './tire_types.entity'
+import { TireTypes } from './tire_types.entity'
 
 export interface PublishTireTypeDto {
 	title?: string
 	description?: string
-	season?: string
 	optimalPressure?: string
 	radius?: string
 }
@@ -133,7 +132,6 @@ export class TireTypesService {
 
 		if (title === '' || title.length > 100) throw new BadRequestException('Название: от 1 до 100 символов')
 		if (description === '' || description.length > 500) throw new BadRequestException('Описание: от 1 до 500 символов')
-		if (!SEASONS.includes(dto.season as (typeof SEASONS)[number])) throw new BadRequestException('Неизвестный тип шины')
 		if (isNaN(pressure) || pressure < PRESSURE_LIMITS.min || pressure > PRESSURE_LIMITS.max) {
 			throw new BadRequestException(`Давление: от ${PRESSURE_LIMITS.min} до ${PRESSURE_LIMITS.max}`)
 		}
@@ -143,7 +141,6 @@ export class TireTypesService {
 
 		draft.title = title
 		draft.description = description
-		draft.season = dto.season as TireTypes['season']
 		draft.optimalPressure = Math.round(pressure * 10) / 10
 		draft.radius = radius
 		draft.status = 'published'
