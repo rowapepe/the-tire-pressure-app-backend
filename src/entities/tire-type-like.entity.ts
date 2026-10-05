@@ -1,5 +1,5 @@
 import { Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn, Column, Unique } from 'typeorm'
-import { TireTypes } from './tire_types.entity'
+import { TireTypes } from './tire-type.entity'
 import { User } from './user.entity'
 
 @Entity('tire_type_likes')

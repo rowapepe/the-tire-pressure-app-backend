@@ -2,7 +2,8 @@ import { Module } from '@nestjs/common'
 import { ConfigModule, ConfigService } from '@nestjs/config'
 import { TypeOrmModule } from '@nestjs/typeorm'
 import { databaseOptions } from './database/database.options'
-import { TireTypesModule } from './tire_types/tire_types.module'
+import { TireTypesModule } from './modules/tire-types/tire-types.module'
+import { UsersModule } from './modules/users/users.module'
 
 @Module({
 	imports: [
@@ -19,11 +20,13 @@ import { TireTypesModule } from './tire_types/tire_types.module'
 				database: config.get<string>('DB_DATABASE'),
 				entities: databaseOptions.entities,
 				migrations: databaseOptions.migrations,
+				extra: { options: '-c timezone=UTC' },
 				synchronize: false,
 				migrationsRun: true,
 			}),
 		}),
 		TireTypesModule,
+		UsersModule,
 	],
 })
 export class AppModule {}

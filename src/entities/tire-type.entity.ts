@@ -1,5 +1,5 @@
 import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm'
-import { TireTypeLike } from './tire_type_like.entity'
+import { TireTypeLike } from './tire-type-like.entity'
 import { User } from './user.entity'
 
 export type TireTypeStatus = 'draft' | 'published' | 'deleted'
@@ -23,11 +23,11 @@ export class TireTypes {
 	@Column({ type: 'varchar', length: 20, default: 'draft' })
 	status: TireTypeStatus
 
-	@Column({ name: 'image_url', type: 'varchar', length: 255, nullable: true })
-	imageUrl: string | null
+	@Column({ name: 'image_name', type: 'varchar', length: 255, nullable: true })
+	imageName: string | null
 
-	@Column({ name: 'video_url', type: 'varchar', length: 255, nullable: true })
-	videoUrl: string | null
+	@Column({ name: 'video_name', type: 'varchar', length: 255, nullable: true })
+	videoName: string | null
 
 	@Column({
 		name: 'optimal_pressure',
@@ -59,4 +59,6 @@ export class TireTypes {
 	likes: TireTypeLike[]
 
 	likeIds?: number[]
+
+	myLike?: TireTypeLike | null
 }

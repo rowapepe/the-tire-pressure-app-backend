@@ -1,15 +1,23 @@
-import { NestFactory } from '@nestjs/core'
+import { ClassSerializerInterceptor, ValidationPipe } from '@nestjs/common'
+import { NestFactory, Reflector } from '@nestjs/core'
 import { AppModule } from './app.module'
-import { NestExpressApplication } from '@nestjs/platform-express'
-import { join } from 'path'
-const hbs = require('hbs')
 
 async function bootstrap() {
-	const app = await NestFactory.create<NestExpressApplication>(AppModule)
-	app.setBaseViewsDir(join(__dirname, '..', 'views'))
-	app.setViewEngine('hbs')
-	app.useStaticAssets(join(__dirname, '..', 'public'))
-	hbs.registerPartials(join(__dirname, '..', 'views/partials'))
+	process.env.TZ = 'UTC'
+	const app = await NestFactory.create(AppModule)
+	app.setGlobalPrefix('api')
+
+	app.useGlobalPipes(
+		new ValidationPipe({
+			whitelist: true,
+			forbidNonWhitelisted: true,
+			transform: true,
+		}),
+	)
+
+	app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)))
+
 	await app.listen(3000)
+	console.log('Application is running on: http://localhost:3000')
 }
 bootstrap()
