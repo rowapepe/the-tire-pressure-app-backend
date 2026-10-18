@@ -26,16 +26,11 @@ export class TypeORMTireTypesRepository {
 	}
 
 	async findPublishedById(id: number, userId: number): Promise<TireTypes | null> {
-		return await this.baseQuery(userId)
-			.where('t.id = :id AND t.status = :status', { id, status: 'published' })
-			.getOne()
+		return await this.baseQuery(userId).where('t.id = :id AND t.status = :status', { id, status: 'published' }).getOne()
 	}
 
 	async findFirstPublished(userId: number): Promise<TireTypes | null> {
-		return await this.baseQuery(userId)
-			.where('t.status = :status', { status: 'published' })
-			.orderBy('t.id', 'ASC')
-			.getOne()
+		return await this.baseQuery(userId).where('t.status = :status', { status: 'published' }).orderBy('t.id', 'ASC').getOne()
 	}
 
 	async findNextPublished(id: number, userId: number): Promise<TireTypes | null> {
@@ -46,9 +41,7 @@ export class TypeORMTireTypesRepository {
 	}
 
 	async findDraft(userId: number): Promise<TireTypes | null> {
-		return await this.baseQuery(userId)
-			.where('t.creatorId = :userId AND t.status = :status', { userId, status: 'draft' })
-			.getOne()
+		return await this.baseQuery(userId).where('t.creatorId = :userId AND t.status = :status', { userId, status: 'draft' }).getOne()
 	}
 
 	async findOwnedNotDeleted(id: number, userId: number): Promise<TireTypes | null> {

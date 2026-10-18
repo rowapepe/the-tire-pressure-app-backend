@@ -11,13 +11,7 @@ export class TypeORMTireTypeLikesRepository {
 	) {}
 
 	async add(userId: number, tireTypeId: number): Promise<void> {
-		await this.repository
-			.createQueryBuilder()
-			.insert()
-			.into(TireTypeLike)
-			.values({ userId, tireTypeId })
-			.orIgnore()
-			.execute()
+		await this.repository.createQueryBuilder().insert().into(TireTypeLike).values({ userId, tireTypeId }).orIgnore().execute()
 	}
 
 	async remove(userId: number, tireTypeId: number): Promise<void> {

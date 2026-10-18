@@ -38,10 +38,7 @@ export class TireTypesController {
 	}
 
 	@Get('feed/:id')
-	async getFeedItem(
-		@Param('id', ParseIntPipe) id: number,
-		@Query() query: FeedQueryDto,
-	): Promise<TireTypeResponseDto> {
+	async getFeedItem(@Param('id', ParseIntPipe) id: number, @Query() query: FeedQueryDto): Promise<TireTypeResponseDto> {
 		return this.tireTypesService.findFeedItem(id, query.next ?? false)
 	}
 
@@ -60,10 +57,7 @@ export class TireTypesController {
 			{ storage: memoryStorage(), limits: { fileSize: 50 * 1024 * 1024 } },
 		),
 	)
-	async createTireType(
-		@Body() createTireTypeDto: CreateTireTypeDto,
-		@UploadedFiles() files: TireTypeFiles,
-	): Promise<TireTypeResponseDto> {
+	async createTireType(@Body() createTireTypeDto: CreateTireTypeDto, @UploadedFiles() files: TireTypeFiles): Promise<TireTypeResponseDto> {
 		return this.tireTypesService.create(createTireTypeDto, files)
 	}
 
@@ -87,10 +81,7 @@ export class TireTypesController {
 
 	@Post(':id/like')
 	@HttpCode(200)
-	async setLike(
-		@Param('id', ParseIntPipe) id: number,
-		@Body() likeTireTypeDto: LikeTireTypeDto,
-	): Promise<LikeResponseDto> {
+	async setLike(@Param('id', ParseIntPipe) id: number, @Body() likeTireTypeDto: LikeTireTypeDto): Promise<LikeResponseDto> {
 		return this.tireTypesService.setLike(id, likeTireTypeDto)
 	}
 }
