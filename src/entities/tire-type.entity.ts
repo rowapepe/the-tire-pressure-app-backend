@@ -23,10 +23,10 @@ export class TireTypes {
 	@Column({ type: 'varchar', length: 20, default: 'draft' })
 	status: TireTypeStatus
 
-	@Column({ name: 'image_name', type: 'varchar', length: 255, nullable: true })
+	@Column({ name: 'image_url', type: 'varchar', length: 255, nullable: true })
 	imageName: string | null
 
-	@Column({ name: 'video_name', type: 'varchar', length: 255, nullable: true })
+	@Column({ name: 'video_url', type: 'varchar', length: 255, nullable: true })
 	videoName: string | null
 
 	@Column({

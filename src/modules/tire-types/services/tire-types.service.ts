@@ -1,7 +1,6 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common'
 import { randomUUID } from 'crypto'
 import { RADIUS_LIMITS } from '../../../common/constants'
-import { getCurrentUser } from '../../../common/current-user'
 import { TireTypes } from '../../../entities/tire-type.entity'
 import { CreateTireTypeDto } from '../dto/create-tire-type.dto'
 import { LikeResponseDto } from '../dto/like-response.dto'
@@ -40,7 +39,7 @@ export class TireTypesService {
 		private readonly minioService: MinioService,
 	) {}
 
-	private async toResponse(tireType: TireTypes, userId: number): Promise<TireTypeResponseDto> {
+	private async toResponse(tireType: TireTypes, userId: number | null): Promise<TireTypeResponseDto> {
 		const [imageUrl, videoUrl] = await Promise.all([
 			this.minioService.getSignedUrl(tireType.imageName),
 			this.minioService.getSignedUrl(tireType.videoName),
@@ -57,7 +56,7 @@ export class TireTypesService {
 			radius: tireType.radius,
 			likesCount: tireType.likeIds?.length ?? 0,
 			isLiked: tireType.myLike ? 1 : 0,
-			isOwner: tireType.creatorId === userId ? 1 : 0,
+			isOwner: userId !== null && tireType.creatorId === userId ? 1 : 0,
 			createdAt: tireType.createdAt,
 			formedAt: tireType.formedAt,
 		}
@@ -74,8 +73,7 @@ export class TireTypesService {
 		return `${field}-${randomUUID()}.${types[file.mimetype]}`
 	}
 
-	async findAll(filters: TireTypeFiltersDto): Promise<TireTypeResponseDto[]> {
-		const userId = getCurrentUser().id
+	async findAll(filters: TireTypeFiltersDto, userId: number | null): Promise<TireTypeResponseDto[]> {
 		const radiusMin = filters.radiusMin ?? RADIUS_LIMITS.min
 		const radiusMax = filters.radiusMax ?? RADIUS_LIMITS.max
 		if (radiusMin > radiusMax) throw new BadRequestException('radiusMin не может быть больше radiusMax')
@@ -84,16 +82,13 @@ export class TireTypesService {
 		return await Promise.all(tireTypes.map((tireType) => this.toResponse(tireType, userId)))
 	}
 
-	async findFirstFeedItem(): Promise<TireTypeResponseDto> {
-		const userId = getCurrentUser().id
-		const tireType = await this.tireTypesRepository.findFirstPublished(userId)
-		if (!tireType) throw new NotFoundException('Опубликованных услуг пока нет')
+	async findFeedItem(id: number | undefined, next: boolean, userId: number | null): Promise<TireTypeResponseDto> {
+		if (id === undefined) {
+			const first = await this.tireTypesRepository.findFirstPublished(userId)
+			if (!first) throw new NotFoundException('Опубликованных услуг пока нет')
+			return await this.toResponse(first, userId)
+		}
 
-		return await this.toResponse(tireType, userId)
-	}
-
-	async findFeedItem(id: number, next: boolean): Promise<TireTypeResponseDto> {
-		const userId = getCurrentUser().id
 		const current = await this.tireTypesRepository.findPublishedById(id, userId)
 		if (!current) throw new NotFoundException(`Услуга с ID ${id} не найдена`)
 		if (!next) return await this.toResponse(current, userId)
@@ -105,16 +100,14 @@ export class TireTypesService {
 		return await this.toResponse(nextItem, userId)
 	}
 
-	async findDraft(): Promise<TireTypeResponseDto> {
-		const userId = getCurrentUser().id
+	async findDraft(userId: number): Promise<TireTypeResponseDto> {
 		const draft = await this.tireTypesRepository.findDraft(userId)
 		if (!draft) throw new NotFoundException('Черновик не найден')
 
 		return await this.toResponse(draft, userId)
 	}
 
-	async create(dto: CreateTireTypeDto, files: TireTypeFiles): Promise<TireTypeResponseDto> {
-		const userId = getCurrentUser().id
+	async create(dto: CreateTireTypeDto, files: TireTypeFiles, userId: number): Promise<TireTypeResponseDto> {
 		const image = files.image?.[0]
 		const video = files.video?.[0]
 		const imageName = this.validateFile(image, 'image', IMAGE_TYPES, MAX_IMAGE_SIZE)
@@ -145,8 +138,7 @@ export class TireTypesService {
 		}
 	}
 
-	async publish(id: number, dto: PublishTireTypeDto): Promise<TireTypeResponseDto> {
-		const userId = getCurrentUser().id
+	async publish(id: number, dto: PublishTireTypeDto, userId: number): Promise<TireTypeResponseDto> {
 		const tireType = await this.tireTypesRepository.findOwnedNotDeleted(id, userId)
 		if (!tireType) throw new NotFoundException(`Услуга с ID ${id} не найдена`)
 		if (tireType.status !== 'draft') throw new ConflictException('Опубликовать можно только черновик')
@@ -162,16 +154,14 @@ export class TireTypesService {
 		return await this.toResponse(saved, userId)
 	}
 
-	async remove(id: number): Promise<void> {
-		const userId = getCurrentUser().id
+	async remove(id: number, userId: number): Promise<void> {
 		const tireType = await this.tireTypesRepository.findOwnedNotDeleted(id, userId)
 		if (!tireType) throw new NotFoundException(`Услуга с ID ${id} не найдена`)
 
 		await this.tireTypesRepository.markDeleted(id)
 	}
 
-	async setLike(id: number, dto: LikeTireTypeDto): Promise<LikeResponseDto> {
-		const userId = getCurrentUser().id
+	async setLike(id: number, dto: LikeTireTypeDto, userId: number): Promise<LikeResponseDto> {
 		const tireType = await this.tireTypesRepository.findPublishedById(id, userId)
 		if (!tireType) throw new NotFoundException(`Услуга с ID ${id} не найдена`)
 

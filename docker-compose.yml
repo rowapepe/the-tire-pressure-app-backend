@@ -1,4 +1,29 @@
 services:
+  postgres:
+    container_name: tire_postgres
+    image: postgres:18
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    environment:
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_DATABASE}
+    volumes:
+      - postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    container_name: tire_redis
+    image: redis:7-alpine
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis-data:/data
+
   minio:
     container_name: minio_storage
     image: minio/minio:latest
@@ -14,4 +39,6 @@ services:
     command: server /data --console-address ":9001"
 
 volumes:
+  postgres-data:
+  redis-data:
   minio-data:

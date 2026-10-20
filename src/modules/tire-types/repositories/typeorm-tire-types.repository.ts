@@ -10,14 +10,13 @@ export class TypeORMTireTypesRepository {
 		private readonly repository: Repository<TireTypes>,
 	) {}
 
-	private baseQuery(userId: number) {
-		return this.repository
-			.createQueryBuilder('t')
-			.loadRelationIdAndMap('t.likeIds', 't.likes')
-			.leftJoinAndMapOne('t.myLike', 't.likes', 'myLike', 'myLike.userId = :userId', { userId })
+	private baseQuery(userId: number | null) {
+		const query = this.repository.createQueryBuilder('t').loadRelationIdAndMap('t.likeIds', 't.likes')
+		if (userId === null) return query
+		return query.leftJoinAndMapOne('t.myLike', 't.likes', 'myLike', 'myLike.userId = :userId', { userId })
 	}
 
-	async findPublished(userId: number, radiusMin: number, radiusMax: number): Promise<TireTypes[]> {
+	async findPublished(userId: number | null, radiusMin: number, radiusMax: number): Promise<TireTypes[]> {
 		return await this.baseQuery(userId)
 			.where('t.status = :status', { status: 'published' })
 			.andWhere('t.radius BETWEEN :radiusMin AND :radiusMax', { radiusMin, radiusMax })
@@ -25,15 +24,15 @@ export class TypeORMTireTypesRepository {
 			.getMany()
 	}
 
-	async findPublishedById(id: number, userId: number): Promise<TireTypes | null> {
+	async findPublishedById(id: number, userId: number | null): Promise<TireTypes | null> {
 		return await this.baseQuery(userId).where('t.id = :id AND t.status = :status', { id, status: 'published' }).getOne()
 	}
 
-	async findFirstPublished(userId: number): Promise<TireTypes | null> {
+	async findFirstPublished(userId: number | null): Promise<TireTypes | null> {
 		return await this.baseQuery(userId).where('t.status = :status', { status: 'published' }).orderBy('t.id', 'ASC').getOne()
 	}
 
-	async findNextPublished(id: number, userId: number): Promise<TireTypes | null> {
+	async findNextPublished(id: number, userId: number | null): Promise<TireTypes | null> {
 		return await this.baseQuery(userId)
 			.where('t.status = :status AND t.id > :id', { status: 'published', id })
 			.orderBy('t.id', 'ASC')

@@ -20,7 +20,7 @@
 
 | Метод | URL                   | Описание                                      | Тело                                                                               | Ответ                                                                  |
 | ----- | --------------------- | --------------------------------------------- | ---------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
-| POST  | `/api/users/register` | Регистрация                                   | JSON: `login` (3–50 символов: латиница, цифры, `_ . -`), `password` (6–72 символа) | `201` `{id, login, createdAt}`; `400` — валидация; `409` — логин занят |
+| POST  | `/api/users/register` | Регистрация                                   | JSON: `login` (3–50 символов: латиница, цифры, `_ . -`), `password` (6–72 символа) | `201` `{id, login}`; `400` — валидация; `409` — логин занят |
 | POST  | `/api/users/login`    | Аутентификация — заглушка для лабораторной №4 | JSON: `login`, `password`                                                          | `200` `{message}`                                                      |
 | POST  | `/api/users/logout`   | Деавторизация — заглушка для лабораторной №4  | —                                                                                  | `200` `{message}`                                                      |
 
@@ -33,7 +33,6 @@
 | `id`            | serial       | PK                        | идентификатор          |
 | `login`         | varchar(50)  | NOT NULL, UNIQUE          | логин                  |
 | `password_hash` | varchar(255) | NULL                      | хэш пароля `salt:hash` |
-| `created_at`    | timestamp    | NOT NULL, default `now()` | дата создания          |
 
 ### `tire_types` — услуги (типы шин)
 
@@ -43,8 +42,8 @@
 | `title`            | varchar(100) | NOT NULL                                                     | наименование                             |
 | `description`      | varchar(500) | NULL                                                         | краткое описание                         |
 | `status`           | varchar(20)  | NOT NULL, default `'draft'`, CHECK `draft/published/deleted` | статус                                   |
-| `image_name`       | varchar(255) | NULL                                                         | имя файла изображения в MinIO            |
-| `video_name`       | varchar(255) | NULL                                                         | имя файла видео в MinIO                  |
+| `image_url`        | varchar(255) | NULL                                                         | имя файла изображения в MinIO            |
+| `video_url`        | varchar(255) | NULL                                                         | имя файла видео в MinIO                  |
 | `optimal_pressure` | numeric(3,1) | NULL                                                         | оптимальное давление, бар (поле по теме) |
 | `radius`           | smallint     | NULL                                                         | радиус колеса, дюймы (поле по теме)      |
 | `created_at`       | timestamp    | NOT NULL, default `now()`                                    | дата создания                            |

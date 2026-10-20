@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common'
 import { ConfigModule, ConfigService } from '@nestjs/config'
 import { TypeOrmModule } from '@nestjs/typeorm'
 import { databaseOptions } from './database/database.options'
+import { SessionModule } from './modules/session/session.module'
 import { TireTypesModule } from './modules/tire-types/tire-types.module'
 import { UsersModule } from './modules/users/users.module'
 
@@ -25,6 +26,7 @@ import { UsersModule } from './modules/users/users.module'
 				migrationsRun: true,
 			}),
 		}),
+		SessionModule,
 		TireTypesModule,
 		UsersModule,
 	],
