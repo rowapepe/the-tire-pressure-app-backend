@@ -24,3 +24,4 @@ lerna-debug.log*
 .tmp
 tsconfig.build.tsbuildinfo
 tsconfig.tsbuildinfo
+.DS_Store
